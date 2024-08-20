@@ -96,18 +96,18 @@ function formatAttributes(
 
   return Object.keys(attributes)
     .map((key) => {
-      const value = attributes[key] ?? "";
+      const value = attributes[key];
 
       if (opts.xmlMode === "foreign") {
         /* Fix up mixed-case attribute names */
         key = attributeNames.get(key) ?? key;
       }
 
-      if (!opts.emptyAttrs && !opts.xmlMode && value === "") {
+      if (!opts.emptyAttrs && !opts.xmlMode && value === null) {
         return key;
       }
 
-      return `${key}="${encode(value)}"`;
+      return `${key}="${encode(value ?? "")}"`;
     })
     .join(" ");
 }
@@ -227,7 +227,12 @@ function renderTag(elem: Element, opts: DomSerializerOptions) {
       ? // In XML mode or foreign mode, and user hasn't explicitly turned off self-closing tags
         opts.selfClosingTags !== false
       : // User explicitly asked for self-closing tags, even in HTML mode
-        opts.selfClosingTags && singleTag.has(elem.name))
+        opts.selfClosingTags && (
+          singleTag.has(elem.name) ||
+          elem.name.indexOf('-') > 0 ||
+          /[A-Z]/.test(elem.name)
+        )
+    )
   ) {
     if (!opts.xmlMode) tag += " ";
     tag += "/>";
